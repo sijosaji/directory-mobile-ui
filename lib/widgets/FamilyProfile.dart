@@ -36,7 +36,7 @@ class _FamilyProfileState extends State<FamilyProfile> {
 
       final familyId = userMetadata['familyId'];
       final response = await http.get(
-        Uri.parse('http://192.168.1.33:8080/api/families/$familyId'),
+        Uri.parse('http://192.168.1.34:8080/api/families/$familyId'),
       );
 
       if (response.statusCode == 200) {
@@ -134,7 +134,7 @@ class _FamilyProfileState extends State<FamilyProfile> {
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: 2,
-        onTap: (index) => print('Navigate to $index'),
+        parentContext: context,
       ),
     );
   }

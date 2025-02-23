@@ -69,6 +69,15 @@ flutter:
 
   assets:
     - assets/login_background.jpg
+    - assets/bible.jpg
+    - assets/church.jpeg
+    - assets/george.jpeg
+    - assets/mary.jpeg
+    - assets/profile.jpeg
+    - assets/sebastian.jpeg
+    - assets/thomas.jpeg
+    - assets/holy_family.jpeg
+    - assets/infant_jesus.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

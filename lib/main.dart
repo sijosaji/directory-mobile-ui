@@ -54,8 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    const String apiUrl = "http://192.168.1.36:8080/auth/token";
-    const String fetchMetadataUrl = "http://192.168.1.36:8080/api/users/user-metadata";
+    const String apiUrl = "http://192.168.1.34:8080/auth/token";
+    const String fetchMetadataUrl = "http://192.168.1.34:8080/api/users/user-metadata";
 
     try {
       final response = await http.post(
@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Wait until the metadata is set before navigating
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  FamilyProfile()),
+          MaterialPageRoute(builder: (context) =>  Homepage()),
         );
       } else {
         _showMessage("Invalid Login Credentials, please try again.");
