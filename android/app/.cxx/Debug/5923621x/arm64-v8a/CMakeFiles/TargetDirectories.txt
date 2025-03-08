@@ -1,0 +1,2 @@
+C:/Users/chris/OneDrive/Desktop/church directory/directory-mobile-ui/android/app/.cxx/Debug/5923621x/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/chris/OneDrive/Desktop/church directory/directory-mobile-ui/android/app/.cxx/Debug/5923621x/arm64-v8a/CMakeFiles/rebuild_cache.dir
