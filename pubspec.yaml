@@ -78,6 +78,10 @@ flutter:
     - assets/thomas.jpeg
     - assets/holy_family.jpeg
     - assets/infant_jesus.jpg
+    - assets/pithruvedi.jpeg
+    - assets/mathruvedi.jpeg
+    - assets/nurses_guild.jpeg
+    - assets/youth.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

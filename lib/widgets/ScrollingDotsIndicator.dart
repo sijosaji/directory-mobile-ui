@@ -24,49 +24,51 @@ class _ScrollingDotsIndicatorState extends State<ScrollingDotsIndicator> {
   }
 
   void _onScroll() {
-    // Calculate visible item index based on scroll position
-    final itemWidth = widget.controller.position.maxScrollExtent / (widget.itemCount - 1);
-    final index = (widget.controller.offset / itemWidth).round();
-    
-    if (index != _currentIndex) {
+    if (!widget.controller.hasClients) return;
+
+    final double scrollOffset = widget.controller.offset;
+    final double viewportWidth = widget.controller.position.viewportDimension;
+    final double maxScrollExtent = widget.controller.position.maxScrollExtent;
+
+    final double estimatedItemWidth = (maxScrollExtent + viewportWidth) / widget.itemCount;
+
+    int newIndex = (scrollOffset / estimatedItemWidth).round().clamp(0, widget.itemCount - 1);
+
+    if (newIndex != _currentIndex) {
       setState(() {
-        _currentIndex = index.clamp(0, widget.itemCount - 1);
+        _currentIndex = newIndex;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    int maxVisibleDots = 4; // Show 3-4 dots at a time
+    int shiftStartIndex = 2; // Start shifting after 3rd item
+
+    // Dynamically adjust the visible range
+    int start = (_currentIndex > shiftStartIndex)
+        ? (_currentIndex - shiftStartIndex).clamp(0, widget.itemCount - maxVisibleDots)
+        : 0;
+    int end = (start + maxVisibleDots).clamp(0, widget.itemCount);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Show first 3 dots
-        ...List.generate(3, (index) {
-          final bool isActive = index == _currentIndex;
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive 
-                  ? Theme.of(context).primaryColor 
-                  : Colors.grey.shade300,
-            ),
-          );
-        }),
-        // Show small dot if more items exist
-        if (widget.itemCount > 3)
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            width: 4,
-            height: 4,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey.shade300,
-            ),
+      children: List.generate(end - start, (index) {
+        final actualIndex = start + index;
+        final bool isActive = actualIndex == _currentIndex;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 12 : 8,
+          height: isActive ? 12 : 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive ? Theme.of(context).primaryColor : Colors.grey.shade400,
           ),
-      ],
+        );
+      }),
     );
   }
 

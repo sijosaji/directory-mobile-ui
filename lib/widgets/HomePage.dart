@@ -1,9 +1,13 @@
 import 'package:directory/widgets/BannerTile.dart';
 import 'package:directory/widgets/BottomNavBar.dart';
+import 'package:directory/widgets/ChurchCommittees.dart';
 import 'package:directory/widgets/ChurchUnitTile.dart';
+import 'package:directory/widgets/DirectoryScreen.dart';
 import 'package:directory/widgets/ScrollingDotsIndicator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'LoginScreen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({Key? key}) : super(key: key);
@@ -14,11 +18,76 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _committeeScrollController = ScrollController();
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _committeeScrollController.dispose();
     super.dispose();
+  }
+
+  void _handleSignOut() {
+  Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+}
+
+  void _showProfileOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  backgroundImage: AssetImage('assets/profile.jpeg'),
+                  radius: 35,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Sign out',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _handleSignOut();
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sign Out'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildHeader() {
@@ -41,8 +110,14 @@ class _HomepageState extends State<Homepage> {
             ),
           ],
         ),
-        const CircleAvatar(
-          backgroundImage: AssetImage('assets/profile.jpeg'),
+        GestureDetector(
+          onTap: () {
+            _showProfileOptions(context);
+          },
+          child: const CircleAvatar(
+            backgroundImage: AssetImage('assets/profile.jpeg'),
+            radius: 24,
+          ),
         ),
       ],
     );
@@ -53,7 +128,15 @@ class _HomepageState extends State<Homepage> {
       children: [
         BannerTile(title: 'All About Us', imagePath: 'assets/church.jpeg'),
         const SizedBox(height: 10),
-        BannerTile(title: 'Parish Directory', imagePath: 'assets/bible.jpg'),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DirectoryScreen()),
+            );
+          },
+          child: BannerTile(title: 'Parish Directory', imagePath: 'assets/bible.jpg'),
+        ),
       ],
     );
   }
@@ -88,6 +171,34 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  Widget _buildCommittees() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Committees', style: _sectionTitleStyle()),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 120,
+          child: ListView(
+            controller: _committeeScrollController,
+            scrollDirection: Axis.horizontal,
+            children: [
+              ChurchCommittees(title: 'Pithruvedi', imagePath: 'assets/pithruvedi.jpeg'),
+              ChurchCommittees(title: 'Mathruvedi', imagePath: 'assets/mathruvedi.jpeg'),
+              ChurchCommittees(title: 'Nurses Guild', imagePath: 'assets/nurses_guild.jpeg'),
+              ChurchCommittees(title: 'Youth', imagePath: 'assets/youth.jpeg'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        ScrollingDotsIndicator(
+          controller: _committeeScrollController,
+          itemCount: 6,
+        ),
+      ],
+    );
+  }
+
   TextStyle _sectionTitleStyle() {
     return GoogleFonts.poppins(
       fontSize: 18,
@@ -115,7 +226,7 @@ class _HomepageState extends State<Homepage> {
                 const SizedBox(height: 20),
                 _buildChurchUnits(),
                 const SizedBox(height: 20),
-                Text('Committees', style: _sectionTitleStyle()),
+                _buildCommittees(),
               ],
             ),
           ),
