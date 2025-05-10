@@ -9,6 +9,7 @@ import 'BottomNavBar.dart';
 import 'FamilyDetailsCard.dart';
 import 'FamilyMembersCard.dart';
 import 'HeaderSection.dart';
+import 'AnniversaryCard.dart';
 import '../enums/Unit.dart'; // Assume UnitMapper contains unit mapping logic
 
 class FamilyProfile extends StatefulWidget {
@@ -79,6 +80,10 @@ class _FamilyProfileState extends State<FamilyProfile> {
               familyDetails['familyMembers'] ?? [],
             );
 
+            final couples = List<Map<String, dynamic>>.from(
+              familyDetails['couples'] ?? [],
+            );
+
             // Find the family head
             final familyHead = familyMembers.firstWhere(
               (member) => member['isFamilyHead'] == true,
@@ -102,7 +107,6 @@ class _FamilyProfileState extends State<FamilyProfile> {
                 children: [
                   HeaderSection(
                     name: familyHead ?? 'Family Name',
-
                   ),
                   const SizedBox(height: 16),
                   const Padding(
@@ -127,8 +131,21 @@ class _FamilyProfileState extends State<FamilyProfile> {
                     ),
                   ),
                   FamilyMembersCard(
+                  
                     members: nonHeadMembers,
                   ),
+                  if (familyDetails.containsKey('couples') && (familyDetails['couples'] as List).isNotEmpty) ...[
+  const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Text(
+      'Anniversary Details',
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    ),
+  ),
+  AnniversaryCard(
+    couples: List<Map<String, dynamic>>.from(familyDetails['couples']),
+  ),
+],
                 ],
               ),
             );
