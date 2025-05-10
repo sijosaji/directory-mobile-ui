@@ -20,7 +20,7 @@ String dobMapper(String dob) {
   // Extract day, month, and optional year
   final day = parts[0];
   final rawMonth = parts[1];
-  final year = parts.length == 3 ? parts[2] : null;
+
 
   // Validate and map the month
   final month = monthMap[rawMonth];
@@ -29,5 +29,5 @@ String dobMapper(String dob) {
   }
 
   // Return the formatted date
-  return year != null ? '$day $month $year' : '$day $month';
+  return '$day $month';
 }

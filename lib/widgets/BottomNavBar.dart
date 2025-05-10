@@ -1,3 +1,4 @@
+import 'package:directory/widgets/DirectoryScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:directory/widgets/HomePage.dart';
 import 'package:directory/widgets/FamilyProfile.dart';
@@ -17,13 +18,20 @@ class BottomNavBar extends StatelessWidget {
     
     switch (index) {
       case 0:
-        Navigator.pushReplacement(
+        Navigator.push(
           parentContext,
           MaterialPageRoute(builder: (context) => Homepage()),
         );
         break;
+
+      case 1: 
+      Navigator.push(
+          parentContext,
+          MaterialPageRoute(builder: (context) => DirectoryScreen()),
+        );
+
       case 2:
-        Navigator.pushReplacement(
+        Navigator.push(
           parentContext,
           MaterialPageRoute(builder: (context) => FamilyProfile()),
         );

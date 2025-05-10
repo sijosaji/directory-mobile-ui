@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../providers/UserMetadataProvider.dart';
 import 'BottomNavBar.dart';
 import 'FamilyDetailsCard.dart';
 import 'FamilyMembersCard.dart';
@@ -11,7 +12,9 @@ import 'HeaderSection.dart';
 import '../enums/Unit.dart'; // Assume UnitMapper contains unit mapping logic
 
 class FamilyProfile extends StatefulWidget {
-  const FamilyProfile({super.key});
+  final String? familyId;
+  
+  const FamilyProfile({super.key, this.familyId});
 
   @override
   _FamilyProfileState createState() => _FamilyProfileState();
@@ -23,20 +26,20 @@ class _FamilyProfileState extends State<FamilyProfile> {
   @override
   void initState() {
     super.initState();
-    _familyDetailsFuture = _fetchFamilyDetails();
+    _familyDetailsFuture = _fetchFamilyDetails(widget.familyId);
   }
 
-  Future<Map<String, dynamic>> _fetchFamilyDetails() async {
+  Future<Map<String, dynamic>> _fetchFamilyDetails(String? familyId) async {
     try {
       final userMetadata = Provider.of<UserMetadataProvider>(context, listen: false).userMetadata;
+      final effectiveFamilyId = familyId ?? userMetadata['familyId'];
 
-      if (userMetadata.isEmpty || !userMetadata.containsKey('familyId')) {
-        throw Exception('Family ID not found in user metadata.');
+      if (effectiveFamilyId == null) {
+        throw Exception('Family ID not found.');
       }
 
-      final familyId = userMetadata['familyId'];
       final response = await http.get(
-        Uri.parse('http://192.168.1.34:8080/api/families/$familyId'),
+        Uri.parse('https://prior-kali-sijo-adcd7b71.koyeb.app/api/families/$effectiveFamilyId'),
       );
 
       if (response.statusCode == 200) {
@@ -99,7 +102,7 @@ class _FamilyProfileState extends State<FamilyProfile> {
                 children: [
                   HeaderSection(
                     name: familyHead ?? 'Family Name',
-                    onEdit: () => print('Edit Profile'),
+
                   ),
                   const SizedBox(height: 16),
                   const Padding(
