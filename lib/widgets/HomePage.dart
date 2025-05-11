@@ -183,17 +183,17 @@ class _HomepageState extends State<Homepage> {
             controller: _committeeScrollController,
             scrollDirection: Axis.horizontal,
             children: [
-              ChurchCommittees(title: 'Pithruvedi', imagePath: 'assets/pithruvedi.jpeg'),
-              ChurchCommittees(title: 'Mathruvedi', imagePath: 'assets/mathruvedi.jpeg'),
-              ChurchCommittees(title: 'Nurses Guild', imagePath: 'assets/nurses_guild.jpeg'),
-              ChurchCommittees(title: 'Youth', imagePath: 'assets/youth.jpeg'),
+              ChurchCommittees(title: 'Pithruvedi', imagePath: 'assets/pithruvedi_logo.jpeg'),
+              ChurchCommittees(title: 'Mathruvedi', imagePath: 'assets/mathruvedi_logo.jpeg'),
+              ChurchCommittees(title: 'Nurses Guild', imagePath: 'assets/nurses_guild_logo.jpeg'),
+              ChurchCommittees(title: 'DSYM', imagePath: 'assets/dsym_logo.jpeg'),
             ],
           ),
         ),
         const SizedBox(height: 8),
         ScrollingDotsIndicator(
           controller: _committeeScrollController,
-          itemCount: 6,
+          itemCount: 4,
         ),
       ],
     );

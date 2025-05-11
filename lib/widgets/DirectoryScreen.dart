@@ -33,6 +33,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
   bool isLoading = false;
   final ScrollController _scrollController = ScrollController();
   UnitFilter selectedFilter = UnitFilter.all;
+  String searchText = "";
 
   @override
   void initState() {
@@ -41,39 +42,46 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
     _scrollController.addListener(_onScroll);
   }
 
-  Future<void> fetchMembers({String query = "", bool loadMore = false}) async {
+  Future<void> fetchMembers({bool loadMore = false}) async {
     if (isLoading) return;
     setState(() { isLoading = true; });
 
-    Map<String, dynamic> requestBody = {
+    final filters = <dynamic>[
+      ...(
+        selectedFilter != UnitFilter.all
+          ? [
+              {
+                "type": "fieldFilter",
+                "fieldName": "unit",
+                "operation": "EQUALS",
+                "values": [selectedFilter.name],
+              }
+            ]
+          : []
+      ),
+      ...(
+        searchText.isNotEmpty
+          ? [
+              {
+                "type": "fieldFilter",
+                "fieldName": "name",
+                "operation": "STARTS_WITH",
+                "values": [searchText],
+              }
+            ]
+          : []
+      ),
+    ];
+
+    final requestBody = {
       "pageSize": 20,
       "offset": offset,
       "node": {
         "type": "filterCriteria",
         "evaluationType": "AND",
-        "filters": []
+        "filters": filters
       }
     };
-
-    if (query.isNotEmpty) {
-      requestBody["node"]["filters"].add({
-        "type": "filterCriteria",
-        "evaluationType": "OR",
-        "filters": [
-          { "type": "fieldFilter", "fieldName": "name", "operation": "STARTS_WITH", "values": [query] },
-          { "type": "fieldFilter", "fieldName": "unit", "operation": "STARTS_WITH", "values": [query] }
-        ]
-      });
-    }
-
-    if (selectedFilter != UnitFilter.all) {
-      requestBody["node"]["filters"].add({
-        "type": "fieldFilter",
-        "fieldName": "unit",
-        "operation": "EQUALS",
-        "values": [selectedFilter.name]
-      });
-    }
 
     final response = await http.post(
       Uri.parse('https://prior-kali-sijo-adcd7b71.koyeb.app/api/families/searchFamilyMembers'),
@@ -99,7 +107,8 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(Duration(seconds: 1), () {
       offset = 1;
-      fetchMembers(query: query);
+      searchText = query;
+      fetchMembers();
     });
   }
 
@@ -183,18 +192,20 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                     backgroundImage: AssetImage('assets/login_background.jpg'),
                   ),
                   onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FamilyProfile(familyId: members[index]['familyId']),
-                        ),
-                      );
-                    },
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FamilyProfile(familyId: members[index]['familyId']),
+                      ),
+                    );
+                  },
                   title: Text(
                     members[index]['name'],
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  subtitle: members[index]['unit'] != null ? Text(getUnitDisplayName(members[index]['unit']), style: TextStyle(color: Colors.grey)) : null,
+                  subtitle: members[index]['unit'] != null
+                      ? Text(getUnitDisplayName(members[index]['unit']), style: TextStyle(color: Colors.grey))
+                      : null,
                 );
               },
             ),
