@@ -24,15 +24,16 @@ class _ScrollingDotsIndicatorState extends State<ScrollingDotsIndicator> {
   }
 
   void _onScroll() {
-    if (!widget.controller.hasClients) return;
+    if (!widget.controller.hasClients || widget.itemCount == 0) return;
 
     final double scrollOffset = widget.controller.offset;
-    final double viewportWidth = widget.controller.position.viewportDimension;
     final double maxScrollExtent = widget.controller.position.maxScrollExtent;
 
-    final double estimatedItemWidth = (maxScrollExtent + viewportWidth) / widget.itemCount;
+    if (maxScrollExtent == 0) return;
 
-    int newIndex = (scrollOffset / estimatedItemWidth).round().clamp(0, widget.itemCount - 1);
+    // Compute index based on scroll ratio
+    double scrollRatio = scrollOffset / maxScrollExtent;
+    int newIndex = (scrollRatio * (widget.itemCount - 1)).round().clamp(0, widget.itemCount - 1);
 
     if (newIndex != _currentIndex) {
       setState(() {
@@ -42,39 +43,49 @@ class _ScrollingDotsIndicatorState extends State<ScrollingDotsIndicator> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    int maxVisibleDots = 4; // Show 3-4 dots at a time
-    int shiftStartIndex = 2; // Start shifting after 3rd item
-
-    // Dynamically adjust the visible range
-    int start = (_currentIndex > shiftStartIndex)
-        ? (_currentIndex - shiftStartIndex).clamp(0, widget.itemCount - maxVisibleDots)
-        : 0;
-    int end = (start + maxVisibleDots).clamp(0, widget.itemCount);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(end - start, (index) {
-        final actualIndex = start + index;
-        final bool isActive = actualIndex == _currentIndex;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 12 : 8,
-          height: isActive ? 12 : 8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? Theme.of(context).primaryColor : Colors.grey.shade400,
-          ),
-        );
-      }),
-    );
-  }
-
-  @override
   void dispose() {
     widget.controller.removeListener(_onScroll);
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int totalDots = widget.itemCount;
+    final bool showAll = totalDots <= 5;
+    final int visibleDots = showAll ? totalDots : 5;
+
+    // Shift the visible range if needed
+    int start = 0;
+    if (!showAll) {
+      int half = (visibleDots / 2).floor();
+      start = (_currentIndex - half).clamp(0, totalDots - visibleDots);
+    }
+
+    return SizedBox(
+      height: 20, // Fixed height to prevent layout shift
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(visibleDots, (i) {
+          final actualIndex = start + i;
+          final bool isActive = actualIndex == _currentIndex;
+
+          return Container(
+            width: 16, // fixed space for dot (includes margin)
+            alignment: Alignment.center,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: isActive ? 12 : 8,
+              height: isActive ? 12 : 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey.shade400,
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }

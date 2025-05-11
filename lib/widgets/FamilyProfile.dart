@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -23,10 +22,13 @@ class FamilyProfile extends StatefulWidget {
 
 class _FamilyProfileState extends State<FamilyProfile> {
   late Future<Map<String, dynamic>> _familyDetailsFuture;
+  late int _currentIndex = 2; // Variable to hold the dynamic current index
 
   @override
   void initState() {
     super.initState();
+    // Set currentIndex based on the presence of a familyId
+    _currentIndex = widget.familyId == null ? 2 : 1;
     _familyDetailsFuture = _fetchFamilyDetails(widget.familyId);
   }
 
@@ -173,7 +175,7 @@ class _FamilyProfileState extends State<FamilyProfile> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        currentIndex: 2,
+        currentIndex: _currentIndex, // Use dynamic currentIndex
         parentContext: context,
       ),
     );
