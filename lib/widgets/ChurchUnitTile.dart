@@ -22,6 +22,7 @@ class ChurchUnitTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: 10),
         child: Container(
           width: 150,
+          
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             image: DecorationImage(
@@ -32,7 +33,7 @@ class ChurchUnitTile extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.0),
             ),
             child: Align(
               alignment: Alignment.bottomLeft,
