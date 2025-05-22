@@ -1,10 +1,11 @@
-// lib/screens/LoginScreen.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../providers/UserMetadataProvider.dart';
 import '../widgets/HomePage.dart';
+import '../widgets/ResetPasswordScreen.dart';
+import 'package:directory/widgets/AdminContactPage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = json.decode(response.body);
         String token = data['accessToken'];
 
-        // Fetch metadata
+        
+
+        // Check if password is default
+        if (_passwordController.text == 'test123') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ResetPasswordScreen(emailId: _usernameController.text)),
+          );
+        } else {
+          // Fetch metadata
         await _fetchUserMetadata(token, fetchMetadataUrl);
 
         _showMessage("Login Successful");
@@ -48,11 +58,11 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Homepage()),
+          );
+        }
       } else {
         _showMessage("Invalid Login Credentials, please try again.");
       }
@@ -100,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/login_background.jpg'),
+                image: AssetImage('assets/login_screen.jpeg'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -188,7 +198,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AdminContactPage()),
+                      );
+                    },
                     child: const Text(
                       'Not able to sign in? Contact Administrator',
                       style: TextStyle(color: Colors.blue),

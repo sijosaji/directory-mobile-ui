@@ -29,100 +29,123 @@ class DirectoryScreen extends StatefulWidget {
 class _DirectoryScreenState extends State<DirectoryScreen> {
   List<Map<String, dynamic>> members = [];
   Timer? _debounce;
-  int offset = 1;
-  bool isLoading = false;
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMoreData = true;
+  String? _errorMessage;
   final ScrollController _scrollController = ScrollController();
   UnitFilter selectedFilter = UnitFilter.all;
   String searchText = "";
+  static const int _pageSize = 20;
 
   @override
   void initState() {
     super.initState();
-    fetchMembers();
+    _fetchMembers();
     _scrollController.addListener(_onScroll);
   }
 
-  Future<void> fetchMembers({bool loadMore = false}) async {
-    if (isLoading) return;
-    setState(() { isLoading = true; });
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-    final filters = <dynamic>[
-      ...(
-        selectedFilter != UnitFilter.all
-          ? [
-              {
-                "type": "fieldFilter",
-                "fieldName": "unit",
-                "operation": "EQUALS",
-                "values": [selectedFilter.name],
-              }
-            ]
-          : []
-      ),
-      ...(
-        searchText.isNotEmpty
-          ? [
-              {
-                "type": "fieldFilter",
-                "fieldName": "name",
-                "operation": "STARTS_WITH",
-                "values": [searchText],
-              }
-            ]
-          : []
-      ),
-    ];
+  Future<void> _fetchMembers({bool loadMore = false}) async {
+    if (_isLoading || (!loadMore && !_hasMoreData)) return;
 
-    final requestBody = {
-      "pageSize": 20,
-      "offset": offset,
-      "node": {
-        "type": "filterCriteria",
-        "evaluationType": "AND",
-        "filters": filters
-      }
-    };
-
-    final response = await http.post(
-      Uri.parse('https://prior-kali-sijo-adcd7b71.koyeb.app/api/families/searchFamilyMembers'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(requestBody),
-    );
-
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
+    try {
       setState(() {
-        if (loadMore) {
-          members.addAll(data.cast<Map<String, dynamic>>());
-        } else {
-          members = data.cast<Map<String, dynamic>>();
+        _isLoading = true;
+        _errorMessage = null;
+        if (!loadMore) {
+          _currentPage = 1;
+          members = [];
         }
-        offset++;
-        isLoading = false;
+      });
+
+      final filters = <dynamic>[
+        if (selectedFilter != UnitFilter.all)
+          {
+            "type": "fieldFilter",
+            "fieldName": "unit",
+            "operation": "EQUALS",
+            "values": [selectedFilter.name],
+          },
+        if (searchText.isNotEmpty)
+          {
+            "type": "fieldFilter",
+            "fieldName": "name",
+            "operation": "STARTS_WITH",
+            "values": [searchText],
+          },
+      ];
+
+      final requestBody = {
+        "pageSize": _pageSize,
+        "offset": _currentPage,
+        "node": {
+          "type": "filterCriteria",
+          "evaluationType": "AND",
+          "filters": filters
+        }
+      };
+
+      final response = await http.post(
+        Uri.parse('https://prior-kali-sijo-adcd7b71.koyeb.app/api/families/searchFamilyMembers'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      ).timeout(Duration(seconds: 10));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          if (loadMore) {
+            members.addAll(data.cast<Map<String, dynamic>>());
+          } else {
+            members = data.cast<Map<String, dynamic>>();
+          }
+          _hasMoreData = data.length == _pageSize;
+          _currentPage++;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load members: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
       });
     }
   }
 
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(Duration(seconds: 1), () {
-      offset = 1;
-      searchText = query;
-      fetchMembers();
+    _debounce = Timer(Duration(milliseconds: 500), () {
+      if (searchText != query) {
+        searchText = query;
+        _hasMoreData = true;
+        _fetchMembers();
+      }
     });
   }
 
   void onFilterSelected(UnitFilter filter) {
-    setState(() {
+    if (selectedFilter != filter) {
       selectedFilter = filter;
-      offset = 1;
-    });
-    fetchMembers();
+      _hasMoreData = true;
+      _fetchMembers();
+    }
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-      fetchMembers(loadMore: true);
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+      _fetchMembers(loadMore: true);
     }
   }
 
@@ -153,7 +176,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
           child: TextField(
             onChanged: onSearchChanged,
             decoration: InputDecoration(
-              hintText: 'Search by Head of Family, Unit',
+              hintText: 'Search by Head of Name',
               hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
               border: InputBorder.none,
               icon: Icon(Icons.search, color: Colors.grey),
@@ -182,33 +205,59 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
           ),
           Divider(),
           Expanded(
-            child: ListView.separated(
-              controller: _scrollController,
-              itemCount: members.length,
-              separatorBuilder: (context, index) => Divider(),
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: AssetImage('assets/login_background.jpg'),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FamilyProfile(familyId: members[index]['familyId']),
+            child: _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(_errorMessage!, style: TextStyle(color: Colors.red)),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => _fetchMembers(),
+                          child: Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : members.isEmpty && !_isLoading
+                    ? Center(child: Text('No members found'))
+                    : ListView.separated(
+                        controller: _scrollController,
+                        itemCount: members.length + (_hasMoreData ? 1 : 0),
+                        separatorBuilder: (context, index) => Divider(),
+                        itemBuilder: (context, index) {
+                          if (index == members.length) {
+                            return _isLoading
+                                ? Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  )
+                                : SizedBox.shrink();
+                          }
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: AssetImage('assets/profile.jpeg'),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FamilyProfile(familyId: members[index]['familyId']),
+                                ),
+                              );
+                            },
+                            title: Text(
+                              members[index]['name'],
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            subtitle: members[index]['unit'] != null
+                                ? Text(getUnitDisplayName(members[index]['unit']), style: TextStyle(color: Colors.grey))
+                                : null,
+                          );
+                        },
                       ),
-                    );
-                  },
-                  title: Text(
-                    members[index]['name'],
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  subtitle: members[index]['unit'] != null
-                      ? Text(getUnitDisplayName(members[index]['unit']), style: TextStyle(color: Colors.grey))
-                      : null,
-                );
-              },
-            ),
           ),
         ],
       ),
